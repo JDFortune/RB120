@@ -66,24 +66,23 @@ end
 # first_job.speak
 
 class GoodDog
-  attr_accessor :name, :height, :weight, :ssn
+  attr_accessor :name, :height, :weight
 
-  def initialize(n, h, w)
-    @name = n
-    @ssn = '123-45-6789'
+  def initialize(n, h, w) # constructore method. invoked by .new
+    @name = n             # this is also an instance method
     @height = h
     @weight = w
   end
 
-  def x_ssn
-    'xxx-xx-' + ssn.split('-').last
+  def self.what_am_i  # example class method definition
+    "I'm a GoodDog class!"
   end
 
   def speak
     "#{name} says 'Arf!'"
   end
 
-  def change_info(n, h, w)
+  def change_info(n, h, w) # instance method
     self.name = n
     self.height = h
     self.weight = w
@@ -96,7 +95,7 @@ end
 
 sparky = GoodDog.new("Jahova McGillinfetch", '12 inches', '10 lbs')
 p sparky.info
-p sparky.ssn
+
 
 sparky.change_info("Sparktaculus Remfolfulus", '24 inches', '45 lbs')
 p sparky.info
@@ -105,3 +104,5 @@ p sparky.info
 fido = GoodDog.new("Fido Gilbesmechk", "10 cm", "19 lbs")
 p fido.speak
 p fido.name
+
+p GoodDog.what_am_i

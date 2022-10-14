@@ -15,8 +15,8 @@ class MyCar
       puts "Can't speed up while car is turned off."
     else
       @speed += num
+      puts "You press the gas and accelerate #{num} mph."
     end
-    p "You press the gas and accelerate #{num} mph."
   end
 
   def brake(num)
@@ -46,8 +46,17 @@ class MyCar
     p "Your new #{color} paint job looks great!"
   end
 
+  def self.gas_mileage(gallons, miles)
+    puts "#{miles / gallons} miles per gallon "
+  end
+
+  def to_s
+    "This car is a #{color}, #{year}, #{model}."
+  end
 end
 
-ruby = MyCar.new(2018, 'Ruby', 'CX-5')
+ruby = MyCar.new(2018, 'ruby red', 'Mazda CX-5')
 
-
+puts ruby
+p ruby.to_s
+p ruby
