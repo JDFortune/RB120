@@ -1,14 +1,30 @@
+RULES = <<~MSG
+The Rules are as follows:
+  - Rock smashes scissors and crushes lizard
+  - Paper disproves spock and covers rock
+  - Scissors cut paper and decapitate lizard
+  - Lizard poisons spock and eats paper
+  - Spock vaporizes rock and smashes scissors
+
+<Press Enter to Begin>
+MSG
+
 class Move
   attr_reader :value
 
   VALUE = ['rock', 'paper', 'scissors', 'lizard', 'spock']
 
   WINS = {
-    'rock' => {'scissors' => 'rock smashes scissors', 'lizard' => 'rock smashes lizard'},
-    'scissors' => {'paper' => 'scissors cut paper', 'lizard' => 'scissors decapitate lizard'},
-    'paper' => {'rock' => 'paper covers rock', 'spock' => 'paper disproves spock'},
-    'spock' => {'scissors' => 'spock smashes scissors', 'rock' => 'spock vaporizes rock'},
-    'lizard' => {'paper' => 'lizard eats paper', 'spock' => 'lizard poisons spock'}
+    'rock' => { 'scissors' => 'rock smashes scissors',
+                'lizard' => 'rock smashes lizard' },
+    'scissors' => { 'paper' => 'scissors cut paper',
+                    'lizard' => 'scissors decapitate lizard' },
+    'paper' => { 'rock' => 'paper covers rock',
+                 'spock' => 'paper disproves spock' },
+    'spock' => { 'scissors' => 'spock smashes scissors',
+                 'rock' => 'spock vaporizes rock' },
+    'lizard' => { 'paper' => 'lizard eats paper',
+                  'spock' => 'lizard poisons spock' }
   }
 
   def initialize(value)
@@ -26,7 +42,13 @@ class Move
   end
 
   def action_sequence(loser)
+    puts ''
     puts WINS[value][loser.move.value].upcase + "!!!"
+    puts ''
+  end
+
+  def ==(other_move)
+    value == other_move.value
   end
 
   def to_s
@@ -39,6 +61,10 @@ class Player
 
   def initialize
     set_name
+  end
+
+  def to_s
+    name
   end
 end
 
@@ -57,7 +83,7 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose, rock, paper, scissors, lizard, or spock:"
+      puts "Please choose 'rock', 'paper', 'scissors', 'lizard', or 'spock':"
       choice = gets.chomp.downcase
       break if Move::VALUE.include?(choice)
       puts "Invalid choice."
@@ -77,10 +103,11 @@ class Computer < Player
 end
 
 class Score
-  attr_accessor :board
+  attr_accessor :board, :history
 
   def initialize(player1, player2)
-    @board = { player1.name => 0, player2.name => 0, "Tie" => 0}
+    @board = { player1.name => 0, player2.name => 0, "Tie" => 0 }
+    @history = {}
   end
 
   def add(player)
@@ -88,20 +115,31 @@ class Score
   end
 
   def to_s
-    puts''
+    puts ''
     puts "==============="
-    puts "     Score     "
+    puts "  Score Board  "
     puts "==============="
     board.each do |name, points|
       puts ("#{name}:  #{points}").rjust(11)
     end
     puts "==============="
     ''
-  end 
+  end
+
+  def add_history(human, computer, winner)
+    history["Game #{history.size + 1}"] =
+      "[#{human}: #{human.move}, #{computer}: #{computer.move}, winner: #{winner}]"
+  end
+
+  def display_history
+    history.each do |game, results|
+      puts game + (" " * (9 - game.size)) + "| #{results}"
+    end
+  end
 end
 
 class RPSGame
-  attr_accessor :human, :computer, :score
+  attr_accessor :human, :computer, :score, :winner
 
   def initialize
     @human = Human.new
@@ -116,48 +154,42 @@ class RPSGame
   end
 
   def display_rules
-    message = <<~MSG
-      The Rules are as follows:
-        - Rock smashes scissors and crushes lizard
-        - Paper disproves spock and covers rock
-        - Scissors cut paper and decapitate lizard
-        - Lizard poisons spock and eats paper
-        - Spock vaporizes rock and smashes scissors
-
-    <Press Enter to Begin>
-    MSG
-    puts message
+    puts RULES
     gets
   end
 
   def display_goodbye_message
-    message = <<~MESSAGE
-        Thanks for playing!
-        I guess this is goodbye, isn't it #{human.name}.
-        I'll never forget this time we spent together."
-    MESSAGE
+    print "Time to wake up."
+    2.times do
+      sleep(0.5)
+      print '.'
+    end
+    puts ''
+  end
 
-    puts message
+  def determine_winner
+    self.winner = human.move == computer.move ? "Tie" : nil
+    unless winner
+      self.winner = human.move > computer.move ? human : computer
+    end
+    score.add_history(human, computer, winner.to_s)
   end
 
   def display_winner
-    if human.move > computer.move
-      winner = human
-    elsif human.move < computer.move
-      winner = computer
+    determine_winner
+    if winner == "Tie"
+      score.add(winner)
     else
-      puts "It's a tie!"
-      winner = 'Tie'
+      loser = ([human, computer] - [winner]).first
+      winner.move.action_sequence(loser)
+      puts "#{winner.name} wins!"
+      score.add(winner.name)
     end
-    loser = winner == human ? computer : human
-    puts "#{winner.name} wins!"
-    score.add(winner.name)
-    winner.move.action_sequence(loser)
   end
 
   def display_moves
-    puts "#{human.name} chose #{human.move}"
-    puts "#{computer.name} chose #{computer.move}"
+    puts "#{human} chose #{human.move}"
+    puts "#{computer} chose #{computer.move}"
   end
 
   def play_again?
@@ -175,6 +207,17 @@ class RPSGame
     system 'clear' || 'cls'
   end
 
+  def see_history?
+    answer = nil
+    loop do
+      puts "Would you like to view your score history? (y/n)"
+      answer = gets.chomp.downcase
+      break if %w(y n).include?(answer)
+      puts "Please enter 'y' or 'n'."
+    end
+    score.display_history if answer == 'y'
+  end
+
   def play
     display_welcome_message
     display_rules
@@ -190,6 +233,7 @@ class RPSGame
     clear_screen
     display_goodbye_message
     puts score
+    see_history?
   end
 end
 

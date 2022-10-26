@@ -130,3 +130,17 @@ end
 p Square.sides # => 4
 p Square.new.sides # => 4
 p Square.new.describe_shape # => "I am a Square and have 4 sides."
+
+hat = 'baseball cap'
+
+def method
+  hat = 'fedora'
+end
+
+p hat
+
+1.times do
+  hat = 'visor'
+end
+
+p hat

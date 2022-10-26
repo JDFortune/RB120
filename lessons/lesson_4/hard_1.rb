@@ -87,11 +87,30 @@
 # p century(1127) == '12th'
 # p century(11201)  == '113th'
 
-def ascii_value(string)
-  string.chars.map(&:ord).sum
+# def ascii_value(string)
+#   string.chars.map(&:ord).sum
+# end
+
+
+
+# p ascii_value('Four score') == 984
+# p ascii_value('Launch School') == 1251
+# p ascii_value('a') == 97
+# p ascii_value('') == 0
+
+MINUTES_DAY = 1440
+def normalize_mins(mins)
+  if mins < 0
+    
 end
 
-p ascii_value('Four score') == 984
-p ascii_value('Launch School') == 1251
-p ascii_value('a') == 97
-p ascii_value('') == 0
+def time_of_day(mins)
+  mins
+
+time_of_day(0) == "00:00"
+time_of_day(-3) == "23:57"
+time_of_day(35) == "00:35"
+time_of_day(-1437) == "00:03"
+time_of_day(3000) == "02:00"
+time_of_day(800) == "13:20"
+time_of_day(-4231) == "01:29"
