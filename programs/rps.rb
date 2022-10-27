@@ -10,7 +10,7 @@ class Move
                     'lizard' => 'scissors decapitate lizard' },
     'paper' => { 'rock' => 'paper covers rock',
                  'spock' => 'paper disproves spock' },
-    'spock' => { 'scissors' => 'spock smashes scissors',
+    'spock' => { 'scissors' => 'spock trims nails',
                  'rock' => 'spock vaporizes rock' },
     'lizard' => { 'paper' => 'lizard eats paper',
                   'spock' => 'lizard poisons spock' }
@@ -45,20 +45,15 @@ class Move
   end
 end
 
-class Rock < Move
-end
+class Rock < Move; end
 
-class Paper < Move
-end
+class Paper < Move; end
 
-class Scissors < Move
-end
+class Scissors < Move; end
 
-class Lizard < Move
-end
+class Lizard < Move; end
 
-class Spock < Move
-end
+class Spock < Move; end
 
 class Player
   attr_accessor :move, :name
@@ -120,13 +115,13 @@ class Score
 
   def to_s
     puts ''
-    puts "==============="
-    puts "  Score Board  "
-    puts "==============="
+    puts "================="
+    puts "   Score Board   "
+    puts "================="
     board.each do |name, points|
-      puts ("#{name}:  #{points}").rjust(11)
+      puts ("#{name}:  #{points}").rjust(14)
     end
-    puts "==============="
+    puts "================="
     ''
   end
 
@@ -165,7 +160,6 @@ class RPSGame
   def display_welcome_message
     clear_screen
     puts "Welcome to Rock, Paper, Scissors, Lizard, Spock!"
-    sleep(1)
   end
 
   def display_rules
