@@ -1,14 +1,3 @@
-RULES = <<~MSG
-The Rules are as follows:
-  - Rock smashes scissors and crushes lizard
-  - Paper disproves spock and covers rock
-  - Scissors cut paper and decapitate lizard
-  - Lizard poisons spock and eats paper
-  - Spock vaporizes rock and smashes scissors
-
-<Press Enter to Begin>
-MSG
-
 class Move
   attr_reader :value
 
@@ -27,8 +16,8 @@ class Move
                   'spock' => 'lizard poisons spock' }
   }
 
-  def initialize(value)
-    @value = value
+  def initialize
+    @value = self.class.to_s.downcase
   end
 
   def >(other_move)
@@ -54,6 +43,21 @@ class Move
   def to_s
     value
   end
+end
+
+class Rock < Move
+end
+
+class Paper < Move
+end
+
+class Scissors < Move
+end
+
+class Lizard < Move
+end
+
+class Spock < Move
 end
 
 class Player
@@ -88,7 +92,7 @@ class Human < Player
       break if Move::VALUE.include?(choice)
       puts "Invalid choice."
     end
-    self.move = Move.new(choice)
+    self.move = eval "#{choice.capitalize}.new"
   end
 end
 
@@ -98,7 +102,7 @@ class Computer < Player
   end
 
   def choose
-    self.move = Move.new(Move::VALUE.sample)
+    self.move = [Rock, Paper, Scissors, Lizard, Spock].sample.new
   end
 end
 
@@ -139,6 +143,17 @@ class Score
 end
 
 class RPSGame
+  RULES = <<~MSG
+  The Rules are as follows:
+    - Rock smashes scissors and crushes lizard
+    - Paper disproves spock and covers rock
+    - Scissors cut paper and decapitate lizard
+    - Lizard poisons spock and eats paper
+    - Spock vaporizes rock and smashes scissors
+  
+  <Press Enter to Begin>
+  MSG
+
   attr_accessor :human, :computer, :score, :winner
 
   def initialize
