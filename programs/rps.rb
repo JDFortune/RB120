@@ -116,7 +116,7 @@ class Score
   end
 
   def add(player)
-    board[player] += 1
+    board[player.to_s] += 1
   end
 
   def to_s
@@ -131,10 +131,12 @@ class Score
     ''
   end
 
+  # rubocop:disable Layout/LineLength
   def add_history(human, computer, winner)
     history["Game #{history.size + 1}"] =
       "[#{human}: #{human.move}, #{computer}: #{computer.move}, winner: #{winner}]"
   end
+  # rubocop:enable Layout/LineLength
 
   def display_history
     history.each do |game, results|
@@ -174,10 +176,10 @@ class RPSGame
   end
 
   def display_goodbye_message
-    print "Time to wake up"
+    print "Time to wake up, #{human}"
     3.times do
-      print '.'
       sleep(0.5)
+      print '.'
     end
     puts ''
   end
@@ -192,14 +194,13 @@ class RPSGame
 
   def display_winner
     determine_winner
-    if winner == "Tie"
-      score.add(winner)
-    else
-      loser = ([human, computer] - [winner]).first
+    unless winner == 'Tie'
+      loser = winner == human ? computer : human
       winner.move.action_sequence(loser)
-      puts "#{winner.name} wins!"
-      score.add(winner.name)
+      puts "#{winner} wins!"
     end
+    puts "\nIt's a tie!" if winner == 'Tie'
+    score.add(winner)
   end
 
   def display_moves
@@ -233,6 +234,8 @@ class RPSGame
     score.display_history if answer == 'y'
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
   def play
     display_welcome_message
     display_rules
@@ -250,6 +253,8 @@ class RPSGame
     puts score
     see_history?
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 end
 
 RPSGame.new.play
