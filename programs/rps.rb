@@ -226,7 +226,7 @@ class RPSGame
   def see_history?
     answer = nil
     loop do
-      puts "Would you like to view your score history? (y/n)"
+      puts "Would you like to view your game history? (y/n)"
       answer = gets.chomp.downcase
       break if %w(y n).include?(answer)
       puts "Please enter 'y' or 'n'."
