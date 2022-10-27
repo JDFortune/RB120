@@ -68,6 +68,12 @@ class Player
 end
 
 class Human < Player
+  MOVE_OBJECT = { 'rock' => Rock.new,
+                  'paper' => Paper.new,
+                  'scissors' => Scissors.new,
+                  'lizard' => Lizard.new,
+                  'spock' => Spock.new }
+
   def set_name
     n = ''
     loop do
@@ -87,7 +93,7 @@ class Human < Player
       break if Move::VALUE.include?(choice)
       puts "Invalid choice."
     end
-    self.move = eval "#{choice.capitalize}.new"
+    self.move = MOVE_OBJECT[choice]
   end
 end
 
@@ -168,10 +174,10 @@ class RPSGame
   end
 
   def display_goodbye_message
-    print "Time to wake up."
-    2.times do
-      sleep(0.5)
+    print "Time to wake up"
+    3.times do
       print '.'
+      sleep(0.5)
     end
     puts ''
   end
