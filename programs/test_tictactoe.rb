@@ -7,16 +7,11 @@ module Displayable
 end
 
 class Board
-  MARKS = ['x', 'o']
+  MARKS = ['X', 'O']
   attr_accessor :status, :board
-  WIN_STATES = [[:tl, :tm, :tr],
-                [:cl, :cm, :cr],
-                [:bl, :bm, :br],
-                [:tl, :cl, :bl],
-                [:tm, :cm, :bm],
-                [:tr, :cr, :br],
-                [:tl, :cm, :br],
-                [:tr, :cm, :bl]]
+  WIN_STATES = [[7, 8, 9], [4, 5, 6], [1, 2, 3],
+                [7, 4, 1], [8, 5, 2], [9, 6, 3],
+                [7, 5, 3], [9, 5, 1]]
 
   def initialize
     @status = { 7 => Square.new('7'),
@@ -31,13 +26,11 @@ class Board
   end
 
   def full? 
-    @status.none? do |key, square|
-      ('1'..'9').include?(square.marker)
-    end
+    unmarked_keys.empty?
   end
 
   def get_square(key)
-    @status[key]
+    @status[key].marker
   end
 
   def set_square(square, mark)
@@ -54,8 +47,15 @@ class Board
     end
   end
 
+  def detect_winner
+  end
+
   def to_s
     "Hello"
+  end
+
+  def unmarked_keys
+    status.keys.select {|key| status[key].unmarked? }
   end
 end
 
@@ -68,6 +68,10 @@ class Square
 
   def to_s
     self.marker
+  end
+
+  def unmarked?
+    ('1'..'9').include?(marker)
   end
 end
 
@@ -89,9 +93,6 @@ class Player
 end
 
 class Human < Player
-  def initialize(mark)
-    super
-  end
 
   def get_name
     loop do
@@ -115,9 +116,6 @@ end
 
 class Computer < Player
   NAMES = ['Hal', 'Kevin', 'Chappie', 'Billy', 'Sampson']
-  def initialize(mark)
-    super
-  end
 
   def get_name
     @names  = NAMES.sample
@@ -138,6 +136,7 @@ class TTTGame
   end
 
   def display_welcome_message
+    clear_screen
     puts 'Welcome to Tic Tac Toe!'
     puts ''
   end
@@ -147,6 +146,8 @@ class TTTGame
   end
 
   def display_board
+    clear_screen
+    puts " #{human.name} is '#{human.mark}' | #{computer.name} is '#{computer.mark}'"
     puts ''
     puts '     |     |'
     puts "  #{board.get_square(7)}  |  #{board.get_square(8)}  |  #{board.get_square(9)}"
@@ -174,11 +175,11 @@ class TTTGame
   end
 
   def human_moves
-    puts "Choose a square between 1-9: "
+    puts "Choose a square (#{board.unmarked_keys.sort.join(', ')}) "
     square = nil
     loop do
       square = gets.chomp.to_i
-      break if (1..9).include?(square)
+      break if board.unmarked_keys.include?(square)
       puts "Sorry, that's not a valid choice"
     end
 
@@ -187,24 +188,26 @@ class TTTGame
   end
 
   def computer_moves
-    square = board.status.select {|k,v| (1..9).include?(k)}.keys.sample
+    square = board.unmarked_keys.sample
     board.set_square(square, computer.mark)
   end
 
+  def display_result
+    display_board
+  end
+
   def play
-    clear_screen
     display_welcome_message
     play_order = set_players
-    p play_order.map(&:name)
     loop do
       display_board
       human_moves
       break if board.someone_won? || board.full?
 
       computer_moves
-      display_board
       break if board.someone_won? || board.full?
     end
+    display_result
     display_goodbye_message
   end
 end
