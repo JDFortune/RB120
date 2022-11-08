@@ -18,7 +18,7 @@ class FixedArray
   end
 
   def to_s
-    array.to_s
+    to_a.to_s
   end
 
   private

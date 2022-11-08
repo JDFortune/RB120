@@ -18,7 +18,9 @@ class Deck
   def see_deck
     deck.dup
   end
+
   private
+  
   attr_accessor :deck
 
   def install_deck

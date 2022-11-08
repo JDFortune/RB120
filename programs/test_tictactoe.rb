@@ -1,8 +1,11 @@
+require 'pry'
+
 module Displayable
   def clear_screen
     system 'clear' || 'cls'
   end
 end
+
 class Board
   MARKS = ['x', 'o']
   attr_accessor :status, :board
@@ -16,15 +19,15 @@ class Board
                 [:tr, :cm, :bl]]
 
   def initialize
-    @status = { tl: Square.new('7'),
-                tm: Square.new('8'),
-                tr: Square.new('9'),
-                cl: Square.new('4'),
-                cm: Square.new('5'),
-                cr: Square.new('6'),
-                bl: Square.new('1'),
-                bm: Square.new('2'),
-                br: Square.new('3') }
+    @status = { 7 => Square.new('7'),
+                8  => Square.new('8'),
+                9  => Square.new('9'),
+                4  => Square.new('4'),
+                5  => Square.new('5'),
+                6  => Square.new('6'),
+                1  => Square.new('1'),
+                2  => Square.new('2'),
+                3  => Square.new('3') }
   end
 
   def full? 
@@ -35,6 +38,10 @@ class Board
 
   def get_square(key)
     @status[key]
+  end
+
+  def set_square(square, mark)
+    status[square].marker = mark
   end
 
   def someone_won?
@@ -95,15 +102,15 @@ class Human < Player
     end
   end
 
-  def pick
-    loop do
-      puts 'Please pick your symbol? (x, o)'
-      input = gets.chomp.downcase
-      self.mark = input if MARKS.include?(input)
-      break if mark
-      puts 'Invalid Entry.'
-    end
-  end
+  # def pick
+  #   loop do
+  #     puts 'Please pick your symbol? (x, o)'
+  #     input = gets.chomp.downcase
+  #     self.mark = input if MARKS.include?(input)
+  #     break if mark
+  #     puts 'Invalid Entry.'
+  #   end
+  # end
 end
 
 class Computer < Player
@@ -120,12 +127,14 @@ end
 class TTTGame
   include Displayable
 
+  HUMAN_MARKER = 'X'
+  COMPUTER_MARKER = 'O'
   attr_reader :human, :computer, :board
 
   def initialize
     @board = Board.new
-    @human = Human.new("X")
-    @computer = Computer.new("O")
+    @human = Human.new(HUMAN_MARKER)
+    @computer = Computer.new(COMPUTER_MARKER)
   end
 
   def display_welcome_message
@@ -140,15 +149,15 @@ class TTTGame
   def display_board
     puts ''
     puts '     |     |'
-    puts "  #{board.get_square(:tl)}  |  #{board.get_square(:tm)}  |  #{board.get_square(:tr)}"
+    puts "  #{board.get_square(7)}  |  #{board.get_square(8)}  |  #{board.get_square(9)}"
     puts '     |     |'
     puts '-----+-----+-----'
     puts '     |     |'
-    puts "  #{board.get_square(:cl)}  |  #{board.get_square(:cm)}  |  #{board.get_square(:cr)}"
+    puts "  #{board.get_square(4)}  |  #{board.get_square(5)}  |  #{board.get_square(6)}"
     puts '     |     |'
     puts '-----+-----+-----'
     puts '     |     |'
-    puts "  #{board.get_square(:bl)}  |  #{board.get_square(:bm)}  |  #{board.get_square(:br)}"
+    puts "  #{board.get_square(1)}  |  #{board.get_square(2)}  |  #{board.get_square(3)}"
     puts '     |     |'
     puts ''
   end
@@ -172,23 +181,30 @@ class TTTGame
       break if (1..9).include?(square)
       puts "Sorry, that's not a valid choice"
     end
+
     board.set_square(square, human.mark)
+    # binding.pry
+  end
+
+  def computer_moves
+    square = board.status.select {|k,v| (1..9).include?(k)}.keys.sample
+    board.set_square(square, computer.mark)
   end
 
   def play
     clear_screen
     display_welcome_message
-    p human
     play_order = set_players
     p play_order.map(&:name)
-    unless board.someone_won? || board.full?
+    loop do
       display_board
-      play_order.each do |player|
-        player.move
-        break if board.someone_won? || board.full?
-      end
+      human_moves
+      break if board.someone_won? || board.full?
+
+      computer_moves
+      display_board
+      break if board.someone_won? || board.full?
     end
-    # display_winner
     display_goodbye_message
   end
 end
