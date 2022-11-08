@@ -187,7 +187,6 @@ class TTTGame
         player.move
         break if board.someone_won? || board.full?
       end
-
     end
     # display_winner
     display_goodbye_message
