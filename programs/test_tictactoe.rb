@@ -7,22 +7,19 @@ module Displayable
 end
 
 class Board
+  RESET = %w(7 8 9 4 5 6 1 2 3)
   MARKS = ['X', 'O']
   attr_accessor :status, :board
-  WIN_STATES = [[7, 8, 9], [4, 5, 6], [1, 2, 3],
-                [7, 4, 1], [8, 5, 2], [9, 6, 3],
-                [7, 5, 3], [9, 5, 1]]
 
   def initialize
-    @status = { 7 => Square.new('7'),
-                8  => Square.new('8'),
-                9  => Square.new('9'),
-                4  => Square.new('4'),
-                5  => Square.new('5'),
-                6  => Square.new('6'),
-                1  => Square.new('1'),
-                2  => Square.new('2'),
-                3  => Square.new('3') }
+    @status = {}
+    reset
+  end
+  
+  def reset
+    RESET.each do |num|
+      status[num.to_i] = Square.new(num)
+    end
   end
 
   def full? 
@@ -35,19 +32,6 @@ class Board
 
   def set_square(square, mark)
     status[square].marker = mark
-  end
-
-  def someone_won?
-    MARKS.any? do |mark|
-      WIN_STATES.any? do |line|
-        line.all? do |key|
-          get_square(key) == mark
-        end
-      end
-    end
-  end
-
-  def detect_winner
   end
 
   def to_s
@@ -78,18 +62,16 @@ end
 class Player
   attr_reader :mark, :name
   
-  MARKS = ['x', 'o']
-  def initialize(mark)
-    @mark = mark
+  MARKS = ['X', 'O']
+  def initialize(board)
+    @board = board
     @name = get_name
-  end
-
-  def move
-
+    get_mark
   end
 
   private
   attr_writer :mark
+  attr_accessor :board
 end
 
 class Human < Player
@@ -103,37 +85,118 @@ class Human < Player
     end
   end
 
-  # def pick
-  #   loop do
-  #     puts 'Please pick your symbol? (x, o)'
-  #     input = gets.chomp.downcase
-  #     self.mark = input if MARKS.include?(input)
-  #     break if mark
-  #     puts 'Invalid Entry.'
-  #   end
-  # end
+  def move
+    puts "Choose a square (#{board.unmarked_keys.sort.join(', ')}) "
+    square = nil
+    loop do
+      square = gets.chomp.to_i
+      break if board.unmarked_keys.include?(square)
+      puts "Sorry, that's not a valid choice"
+    end
+    board.set_square(square, mark)
+  end
+
+  def get_mark
+    loop do
+      puts 'Please pick your symbol? (x, o)'
+      input = gets.chomp.upcase
+      self.mark = input if MARKS.include?(input)
+      break if mark
+      puts 'Invalid Entry.'
+    end
+  end
 end
 
 class Computer < Player
   NAMES = ['Hal', 'Kevin', 'Chappie', 'Billy', 'Sampson']
+  def initialize(mark, board)
+    super(board)
+    @mark = mark
+  end
 
   def get_name
     @names  = NAMES.sample
+  end
+
+  def get_mark
+    @mark
+  end
+
+  def move
+    # if strategy
+    #   strategy
+    # else
+    #   sample_the_board
+    # end
+    square = board.unmarked_keys.sample
+    board.set_square(square, mark)
+  end
+
+  def strategy
+    if offense
+      return offense
+    elsif defense
+      return defense
+    end
+    nil
+  end
+
+  def offense
+  end
+
+  def defense
   end
 end
 
 class TTTGame
   include Displayable
-
-  HUMAN_MARKER = 'X'
-  COMPUTER_MARKER = 'O'
-  attr_reader :human, :computer, :board
+  WIN_STATES = [[7, 8, 9], [4, 5, 6], [1, 2, 3],
+                [7, 4, 1], [8, 5, 2], [9, 6, 3],
+                [7, 5, 3], [9, 5, 1]]
 
   def initialize
     @board = Board.new
-    @human = Human.new(HUMAN_MARKER)
-    @computer = Computer.new(COMPUTER_MARKER)
+    @human = Human.new(board)
+    @computer = Computer.new(computer_marker, board)
   end
+
+  def play_again?
+    answer = nil
+    loop do
+      puts "Would you like to play again? (y/n)"
+      answer = gets.downcase.chomp
+      break if %w(y n).include?(answer)
+    end
+    answer == 'y'
+  end
+
+  def play
+    display_welcome_message
+    loop do
+      board.reset
+      self.play_order = set_players
+
+      until someone_won? || board.full?
+        play_order.each do |player|
+          display_board
+          player.move
+          break self.winner = winning_marker if someone_won? || board.full?
+        end
+      end
+
+      display_result
+      break unless play_again?
+    end
+    display_goodbye_message
+  end
+
+  def computer_marker
+    (Board::MARKS - [human.mark]).first
+  end
+
+  private
+  attr_accessor :play_order, :winner
+  attr_reader :human, :computer, :board
 
   def display_welcome_message
     clear_screen
@@ -174,41 +237,28 @@ class TTTGame
     input[0] == 'p' ? player_order : player_order.reverse
   end
 
-  def human_moves
-    puts "Choose a square (#{board.unmarked_keys.sort.join(', ')}) "
-    square = nil
-    loop do
-      square = gets.chomp.to_i
-      break if board.unmarked_keys.include?(square)
-      puts "Sorry, that's not a valid choice"
-    end
-
-    board.set_square(square, human.mark)
-    # binding.pry
+  def someone_won?
+    !!winning_marker
   end
 
-  def computer_moves
-    square = board.unmarked_keys.sample
-    board.set_square(square, computer.mark)
+  def winning_marker
+    play_order.each do |player|
+      WIN_STATES.any? do |line|
+        return player if line.all? do |key|
+          board.get_square(key) == player.mark
+        end
+      end
+    end
+    nil
   end
 
   def display_result
     display_board
-  end
-
-  def play
-    display_welcome_message
-    play_order = set_players
-    loop do
-      display_board
-      human_moves
-      break if board.someone_won? || board.full?
-
-      computer_moves
-      break if board.someone_won? || board.full?
+    if winner
+      puts "#{winning_marker.name} won!!"
+    else
+      puts "It's a tie"
     end
-    display_result
-    display_goodbye_message
   end
 end
 
