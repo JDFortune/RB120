@@ -174,7 +174,7 @@ module TicTacToe
 
     def strategy
       middle = board.squares[5].unmarked? ? 5 : false
-      square = offense || defense || setup || middle
+      square = offense || defense || offensive_setup || middle
       return nil unless square
       square
     end
@@ -198,7 +198,7 @@ module TicTacToe
       nil
     end
 
-    def setup
+    def offensive_setup
       Game::WIN_STATES.each do |line|
         if board.count_marks(line, mark) == 1 && board.count_unmarked(line) == 2
           line.each { |sq| return sq if board.squares[sq].unmarked? }
