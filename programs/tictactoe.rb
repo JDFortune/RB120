@@ -116,11 +116,11 @@ module TicTacToe
   end
 
   class Human < Player
-
     def initialize(board)
       super(board)
       pick_mark
     end
+
     def input_name
       loop do
         puts "Enter your name: "
@@ -363,5 +363,6 @@ module TicTacToe
     end
   end
 end
+
 game = TicTacToe::Game.new
 game.play
