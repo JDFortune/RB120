@@ -256,10 +256,6 @@ module TicTacToe
       display_goodbye_message
     end
 
-    def computer_marker
-      (Board::MARKS - [human.mark]).first
-    end
-
     private
 
     attr_accessor :players, :winner, :current_player, :score
@@ -274,6 +270,10 @@ module TicTacToe
         display_score
         break unless play_again?
       end
+    end
+
+    def computer_marker
+      (Board::MARKS - [human.mark]).first
     end
 
     def play_again?
