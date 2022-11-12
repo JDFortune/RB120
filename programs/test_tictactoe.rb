@@ -3,6 +3,7 @@ module Displayable
     system 'clear' || 'cls'
   end
 end
+
 module TicTacToe
   class Board
     RESET = %w(7 8 9 4 5 6 1 2 3)
@@ -20,9 +21,21 @@ module TicTacToe
       end
     end
 
+    def join_available_squares
+      available = unmarked_keys.sort.map(&:to_s)
+
+      case available.size
+      when 1
+        available.join
+      when 2
+        available.first + ' ' + available.last
+      else
+        available[0..-2].join(', ') + ', or ' + available.last
+      end
+    end
+
     # rubocop:disable Metrics/AbcSize
     # rubocop:disable Metrics/MethodLength
-
     def draw
       puts ''
       puts '     |     |'
@@ -45,9 +58,9 @@ module TicTacToe
       unmarked_keys.empty?
     end
 
-    def get_square(key)
-      @squares[key].marker
-    end
+    # def get_square(key)
+    #   @squares[key].marker
+    # end
 
     def []=(square, mark)
       squares[square].marker = mark
@@ -118,7 +131,7 @@ module TicTacToe
     end
 
     def move
-      puts "Choose a square (#{board.unmarked_keys.sort.join(', ')}) "
+      puts "Choose a square: #{board.join_available_squares}"
       square = nil
       loop do
         square = gets.chomp.to_i
@@ -182,7 +195,7 @@ module TicTacToe
     def defense
       Game::WIN_STATES.each do |line|
         if board.count_marks(line, opponent_marker) == 2 &&
-          board.count_unmarked(line) == 1
+           board.count_unmarked(line) == 1
           line.each { |sq| return sq if board.squares[sq].unmarked? }
         end
       end
@@ -241,24 +254,11 @@ module TicTacToe
       @score = Score.new(human.name, computer.name)
     end
 
-    # rubocop:disable Metrics/MethodLength
     def play
       display_welcome_message
-      loop do
-        board.reset
-        set_players
-        loop do
-          display_board
-          current_player_move
-          break self.winner = winning_marker if someone_won? || board.full?
-        end
-        display_result
-        display_score
-        break unless play_again?
-      end
+      main_game
       display_goodbye_message
     end
-    # rubocop:enable Metrics/MethodLength
 
     def computer_marker
       (Board::MARKS - [human.mark]).first
@@ -268,6 +268,17 @@ module TicTacToe
 
     attr_accessor :players, :winner, :current_player, :score
     attr_reader :human, :computer, :board
+
+    def main_game
+      loop do
+        board.reset
+        set_players
+        player_move
+        display_result
+        display_score
+        break unless play_again?
+      end
+    end
 
     def play_again?
       answer = nil
@@ -288,7 +299,7 @@ module TicTacToe
 
     def display_goodbye_message
       clear_screen
-      puts 'Thanks for playing Tic Tac Toe! Goodbye'
+      puts "Thanks for playing Tic Tac Toe, #{human}! Goodbye!"
       puts score
     end
 
@@ -308,7 +319,7 @@ module TicTacToe
       loop do
         puts "Who should go first? (human/computer)"
         input = gets.chomp.downcase.strip
-        break if %w(human h computer c).include?(input)
+        break if %w(human h computer c comp).include?(input)
       end
       self.current_player = input.start_with?('h') ? human : computer
     end
@@ -323,11 +334,19 @@ module TicTacToe
       end
     end
 
-    def someone_won?
+    def player_move
+      loop do
+        display_board
+        current_player_move
+        break self.winner = winning_marker if someone_won? || board.full?
+      end
+    end
+
+    def someone_won? # should move to board class?
       !!winning_marker
     end
 
-    def winning_marker
+    def winning_marker # should move to board class?
       players.each do |player|
         WIN_STATES.any? do |line|
           return player if board.count_marks(line, player.mark) == 3
