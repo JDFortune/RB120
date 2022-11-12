@@ -58,10 +58,6 @@ module TicTacToe
       unmarked_keys.empty?
     end
 
-    # def get_square(key)
-    #   @squares[key].marker
-    # end
-
     def []=(square, mark)
       squares[square].marker = mark
     end
@@ -107,7 +103,6 @@ module TicTacToe
     def initialize(board)
       @board = board
       @name = input_name
-      pick_mark
     end
 
     def to_s
@@ -121,6 +116,11 @@ module TicTacToe
   end
 
   class Human < Player
+
+    def initialize(board)
+      super(board)
+      pick_mark
+    end
     def input_name
       loop do
         puts "Enter your name: "
@@ -163,10 +163,6 @@ module TicTacToe
 
     def input_name
       @names = NAMES.sample
-    end
-
-    def pick_mark
-      @mark
     end
 
     def move
@@ -342,11 +338,11 @@ module TicTacToe
       end
     end
 
-    def someone_won? # should move to board class?
+    def someone_won?
       !!winning_marker
     end
 
-    def winning_marker # should move to board class?
+    def winning_marker
       players.each do |player|
         WIN_STATES.any? do |line|
           return player if board.count_marks(line, player.mark) == 3
