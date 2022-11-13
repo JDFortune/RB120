@@ -8,6 +8,7 @@ module TicTacToe
   class Board
     RESET = %w(7 8 9 4 5 6 1 2 3)
     MARKS = ['X', 'O']
+    
     attr_accessor :squares
 
     def initialize

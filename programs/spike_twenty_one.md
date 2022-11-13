@@ -25,22 +25,26 @@ Evalute_Cards(or calculate_total)
 
 ## Structure
 Deck
-  shuffle
-  deal
+  + @deck
+  - shuffle
+  - deal
 
 Cards
-  display (to_s)
+  + @suit, @rank
+  - display (to_s)
 
 Player
-  Hit/Stay (encompassed under a 'turn' or 'move' method)
-   - hand will need to be evaluated after each hit
+  + @hand = []
+  - Hit
+  - Stay
+  - busted?
+  - evaluate_total
 
-Dealer (Does this class inherit player? I think so)
+<!-- Add a Computer class that inherits from Player if wanting more functionality -->
 
-
-Hand (collaborator of Player? or a state of the player?)
-  evaluate/calculate_total
-  bust is a state associated with the current hand
+Dealer < Player
+  + deck
+  - deal
 
 Game
-  playgame
+  - play
