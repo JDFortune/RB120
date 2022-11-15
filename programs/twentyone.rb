@@ -1,7 +1,7 @@
 require 'pry'
 
 module Validatable
-  def is_number?(num)
+  def number?(num)
     num.match?(/[0-9]/)
   end
 
@@ -25,6 +25,16 @@ module Validatable
     end
     answer[0]
   end
+
+  def validate_name
+    name = nil
+    loop do
+      input = gets.chomp
+      break name = input if input.match?(/[A-Za-z]/)
+      puts "Invalid input. At least put one letter."
+    end
+    name
+  end
 end
 
 module Displayable
@@ -41,9 +51,9 @@ module Displayable
   end
 
   def display_results(winners, losers, tiers)
-    display_winners(winners) if winners.size > 0
-    display_losers(losers) if losers.size > 0
-    display_tiers(tiers) if tiers.size > 0
+    display_winners(winners) if !winners.empty?
+    display_losers(losers) if !losers.empty?
+    display_tiers(tiers) if !tiers.empty?
   end
 
   def display_winners(winners)
@@ -68,6 +78,29 @@ module Displayable
     end
   end
 
+  # rubocop:disable Metrics/AbcSize
+  def show_dealer_cards
+    if @first_show
+      puts "Dealer: #{dealer.name}--Score: #{dealer.card_values.first}"
+      puts prep_card_display([dealer.hand.first, Card.new('?', '?')])
+    else
+      puts "Dealer: #{dealer.name}--Score: #{dealer.evaluate_hand}"
+      puts prep_card_display(dealer.hand)
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
+
+  def show_player_cards
+    prepped_cards = players.each_with_object({}) do |player, output|
+      output[player] = prep_card_display(player.hand)
+    end
+    prepped_cards.each do |player, cards|
+      puts "Player: #{player}--Score: #{player.evaluate_hand}"
+      puts cards
+      puts ''
+    end
+  end
+
   def display_tiers(tiers)
     case tiers.size
     when 1
@@ -76,12 +109,18 @@ module Displayable
       puts "#{tiers.join(' and ')} tied with dealer."
     else
       puts "#{tiers[0..-2].join(', ')} and #{tiers.last} tied with dealer."
-    end 
+    end
+  end
+
+  def show_cards
+    clear_screen
+    show_dealer_cards
+    show_player_cards
   end
 
   def display_goodbye_message
     puts "\n"
-    puts "Thanks for playing! Stay warm out there #{players.first}"
+    puts "Thanks for playing! Stay warm out there, #{players.first}."
   end
 
   def display_score
@@ -140,13 +179,14 @@ class Card
   end
 
   def image
-    [ '  _________  ',
-      " |       #{rank.to_s.rjust(2)}| ",
-      ' |         | ',
-      " |    #{suit}    | ",
-      ' |         | ',
-      " |#{rank.to_s.rjust(2)}       | ",
-      ' |_________| ', '' ]
+    ['  _________  ',
+     " |       #{rank.to_s.rjust(2)}| ",
+     ' |         | ',
+     " |    #{suit}    | ",
+     ' |         | ',
+     " |#{rank.to_s.rjust(2)}       | ",
+     ' |_________| ',
+     '']
   end
 end
 
@@ -154,37 +194,20 @@ class Player
   attr_accessor :hand, :name
 
   def initialize
-    @name = get_name
+    @name = set_name
     @hand = []
-  end
-
-  def hit?(move)
-    move == 'h'
-  end
-
-  def stay?(move)
-    move == 's'
   end
 
   def busted?
     evaluate_hand > 21
   end
-  
+
   def toss_cards
     self.hand = []
   end
 
   def to_s
     name
-  end
-
-  def get_name
-    loop do
-      puts "Please enter your name."
-      input = gets.chomp
-      break self.name = input if !input.strip.empty?
-      puts "Invalid name."
-    end
   end
 
   def card_values
@@ -203,7 +226,7 @@ class Player
   def count_aces
     hand.count { |card| card.rank == 'A' }
   end
-  
+
   def evaluate_hand
     aces = count_aces
     total = card_values.sum
@@ -215,16 +238,38 @@ class Player
   end
 end
 
+class Human < Player
+  include Validatable
+  @@humans = 0
+
+  def initialize
+    @@humans += 1
+    super
+  end
+
+  def set_name
+    print "Player #{@@humans}, Please enter your name: "
+    self.name = validate_name
+  end
+
+  def hit?(move)
+    move == 'h'
+  end
+
+  def stay?(move)
+    move == 's'
+  end
+end
+
 class Computer < Player
   NAMES = %w( Max Calvin Pietro Sam Shiela Denise Carol Jenny
               Belladonna Cleopatra Carl )
 
   private
 
-  def get_name
+  def set_name
     NAMES.sample
   end
-
 end
 
 class Dealer < Player
@@ -240,7 +285,7 @@ class Dealer < Player
     deck.shuffle!
   end
 
-  def get_name
+  def set_name
     NAMES.sample
   end
 
@@ -261,18 +306,22 @@ class Score
   attr_reader :scores
 
   def initialize
-    @scores = Hash.new { |hash, key| hash[key] = {won: 0, lost: 0, tied: 0, bust: 0} }
+    @scores = Hash.new do |hash, key|
+      hash[key] = { won: 0, lost: 0, tied: 0, bust: 0 }
+    end
   end
 
+  # rubocop:disable Metrics/AbcSize
   def add(players, winners, losers, tiers)
     players.each do |player|
-      scores[player][:won] += 1 if winners.include?(player.name)
+      scores[player][:won]  += 1 if winners.include?(player.name)
       scores[player][:lost] += 1 if losers.include?(player.name)
       scores[player][:tied] += 1 if tiers.include?(player.name)
       scores[player][:bust] += 1 if player.busted?
     end
   end
 
+  # rubocop:disable Metrics/MethodLength
   def to_s
     board_size = 20
     line = '-' * board_size
@@ -280,25 +329,27 @@ class Score
     puts "Score".center(board_size)
     scores.each do |player, score|
       puts line
-      puts "#{player}"
-      puts "Won: ".rjust(8) + "#{score[:won]}"
-      puts "Lost: ".rjust(8) + "#{score[:lost]}"
-      puts "Tied: ".rjust(8) + "#{score[:tied]}"
-      puts "TIMES BUSTED: " + "#{score[:bust]}"
+      puts player
+      puts "Won: ".rjust(8)  + score[:won].to_s
+      puts "Lost: ".rjust(8) + score[:lost].to_s
+      puts "Tied: ".rjust(8) + score[:tied].to_s
+      puts "TIMES BUSTED: "  + score[:bust].to_s
     end
     line
   end
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/AbcSize
 end
 
 class Game
   include Validatable, Displayable
-  
+
   def initialize
     @players = []
     @dealer = Dealer.new
     @score = Score.new
   end
-  
+
   def play
     display_welcome_message
     set_players
@@ -314,11 +365,10 @@ class Game
   def main_game
     loop do
       reset
-      initial_deal
+      deal_all
       show_cards
-      player_turns
-      dealer_turn
-      determine_winners #also adds to scores
+      take_turns
+      determine_winners
       display_score
       break unless play_again?
     end
@@ -342,15 +392,16 @@ class Game
   def players_won
     players.select do |player|
       dealer.busted? && !player.busted? ||
-      player.evaluate_hand > dealer.evaluate_hand &&
-      !player.busted?
+        player.evaluate_hand > dealer.evaluate_hand &&
+          !player.busted?
     end.map(&:name)
   end
 
   def players_lost
     players.select do |player|
       player.busted? ||
-      player.evaluate_hand < dealer.evaluate_hand && !dealer.busted?
+        player.evaluate_hand < dealer.evaluate_hand &&
+          !dealer.busted?
     end.map(&:name)
   end
 
@@ -360,40 +411,19 @@ class Game
     end.map(&:name)
   end
 
-  def show_cards
-    clear_screen
-    show_dealer_cards
-    show_player_cards
-  end
-
   def reset
     dealer.toss_cards
     players.each(&:toss_cards)
     self.first_show = true
   end
 
-  def show_dealer_cards
-    if @first_show
-      puts "Dealer: #{dealer.name}--Score: #{dealer.card_values.first}"
-      puts prep_card_display([dealer.hand.first, Card.new('?', '?')])
-    else
-      puts "Dealer: #{dealer.name}--Score: #{dealer.evaluate_hand}"
-      puts prep_card_display(dealer.hand)
-    end
-  end
-
-  def show_player_cards
-    players.each_with_object({}) do |player, output|
-      output[player] = prep_card_display(player.hand)
-    end.each do |player, cards|
-      puts "Player: #{player}--Score: #{player.evaluate_hand}"
-      puts cards
-      puts ''
-    end
-  end
-
   def prep_card_display(hand)
     hand.map(&:image).transpose.map(&:join)
+  end
+
+  def take_turns
+    player_turns
+    dealer_turn
   end
 
   def player_turns
@@ -442,13 +472,23 @@ class Game
     show_cards
   end
 
+  def set_players
+    humans = set_humans
+    computers = set_computers
+    if humans + computers == 0
+      puts "We need at least one player to play."
+      set_players
+    end
+    humans.times { players << Human.new }
+    computers.times { players << Computer.new }
+  end
 
   def set_humans
     humans = nil
     loop do
       puts "How many humans will be playing today?"
       input = gets.chomp
-      if is_number?(input) && input.to_i >= 0
+      if number?(input) && input.to_i >= 0
         break humans = input.to_i
       end
       puts "Please input a number greater than or equal to 0"
@@ -461,7 +501,7 @@ class Game
     loop do
       puts "Will there be any additional automated players today?"
       input = gets.chomp
-      if is_number?(input) && input.to_i >= 0
+      if number?(input) && input.to_i >= 0
         break computers = input.to_i
       end
       puts "Please input a number greater than or equal to 0"
@@ -469,18 +509,7 @@ class Game
     computers
   end
 
-  def set_players
-    humans = set_humans
-    computers = set_computers
-    if humans + computers == 0
-      puts "We need at least one player to play."
-      set_players
-    end
-    humans.times { |human| players << Player.new }
-    computers.times { |computer| players << Computer.new }
-  end
-
-  def initial_deal
+  def deal_all
     participants = players + [dealer]
     participants.each do |player|
       dealer.deal(player, 2)
