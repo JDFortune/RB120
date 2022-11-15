@@ -80,7 +80,17 @@ module Displayable
   end
 
   def display_goodbye_message
+    puts "\n"
     puts "Thanks for playing! Stay warm out there #{players.first}"
+  end
+
+  def display_score
+    puts score
+  end
+
+  def clear_and_display_score
+    clear_screen
+    puts score
   end
 end
 
@@ -247,7 +257,38 @@ class Dealer < Player
   end
 end
 
-class Score; end
+class Score
+  attr_reader :scores
+
+  def initialize
+    @scores = Hash.new { |hash, key| hash[key] = {won: 0, lost: 0, tied: 0, bust: 0} }
+  end
+
+  def add(players, winners, losers, tiers)
+    players.each do |player|
+      scores[player][:won] += 1 if winners.include?(player.name)
+      scores[player][:lost] += 1 if losers.include?(player.name)
+      scores[player][:tied] += 1 if tiers.include?(player.name)
+      scores[player][:bust] += 1 if player.busted?
+    end
+  end
+
+  def to_s
+    board_size = 20
+    line = '-' * board_size
+    puts line
+    puts "Score".center(board_size)
+    scores.each do |player, score|
+      puts line
+      puts "#{player}"
+      puts "Won: ".rjust(8) + "#{score[:won]}"
+      puts "Lost: ".rjust(8) + "#{score[:lost]}"
+      puts "Tied: ".rjust(8) + "#{score[:tied]}"
+      puts "TIMES BUSTED: " + "#{score[:bust]}"
+    end
+    line
+  end
+end
 
 class Game
   include Validatable, Displayable
@@ -262,6 +303,7 @@ class Game
     display_welcome_message
     set_players
     main_game
+    clear_and_display_score
     display_goodbye_message
   end
 
@@ -277,6 +319,7 @@ class Game
       player_turns
       dealer_turn
       determine_winners #also adds to scores
+      display_score
       break unless play_again?
     end
   end
@@ -293,6 +336,7 @@ class Game
     tiers = players_tied
     display_results(winners, losers, tiers)
     puts "The House Wins..." if losers.size == players.size
+    score.add(players, winners, losers, tiers)
   end
 
   def players_won
@@ -381,17 +425,20 @@ class Game
   def computer_decide(player)
     until player.evaluate_hand >= 17 ||
           player.busted?
+      sleep(0.5)
       dealer.deal(player, 1)
+      show_cards
     end
-    show_cards
   end
 
   def dealer_turn
-    unless players.all?(&:busted?)
+    all_bust = players.all?(&:busted?)
+    unless all_bust
       until dealer.evaluate_hand >= 17 || dealer.busted?
         dealer.deal(dealer, 1)
       end
     end
+    sleep(1)
     show_cards
   end
 
