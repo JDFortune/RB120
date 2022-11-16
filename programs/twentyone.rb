@@ -1,5 +1,3 @@
-require 'pry'
-
 module Validatable
   def number?(num)
     num.match?(/[0-9]/)
@@ -344,8 +342,8 @@ class Score
       puts "Won: ".rjust(8)  + score[:won].to_s
       puts "Lost: ".rjust(8) + score[:lost].to_s
       puts "Tied: ".rjust(8) + score[:tied].to_s
-      puts "Win%: ".rjust(8) + (score[:won].fdiv(score.values[0, 3].sum) * 100).ceil.to_s + "%"
-      puts "Total Games: " + score.values[0, 3].sum.to_s
+      puts "Win Rate: " + (score[:won].fdiv(score.values[0, 3].sum) * 100).ceil.to_s + "%"
+      puts "Total Rounds: " + score.values[0, 3].sum.to_s
       puts "TIMES BUSTED: " + score[:bust].to_s
     end
     line
@@ -355,7 +353,7 @@ class Score
   # rubocop:enable Layout/LineLength
 end
 
-class Game
+class TwentyOne
   include Validatable, Displayable
 
   def initialize
@@ -513,7 +511,7 @@ class Game
   def set_computers
     computers = nil
     loop do
-      puts "Will there be any additional automated players today?"
+      puts "Would you like to add additional computer players?"
       input = gets.chomp
       if number?(input) && input.to_i >= 0
         break computers = input.to_i
@@ -531,5 +529,5 @@ class Game
   end
 end
 
-twenty_one = Game.new
+twenty_one = TwentyOne.new
 twenty_one.play
