@@ -43,7 +43,17 @@ module Displayable
   end
 
   def display_welcome_message
-    puts "Welcome to 21! The game where Everyone's a winner!"
+    clear_screen
+    message = <<~WLM
+      Welcome to 21! The game where Everyone is a winner, roughly 33-45% of the time!
+      Choose to hit or stay, when it's your turn.
+      Highest score without busting is 21.
+      Good Luck! Again, about 1/3 of the time...
+      
+      <hit Enter when ready>
+    WLM
+    puts message
+    gets
   end
 
   def display_busted(player)
@@ -81,10 +91,10 @@ module Displayable
   # rubocop:disable Metrics/AbcSize
   def show_dealer_cards
     if @first_show
-      puts "Dealer: #{dealer.name}--Score: #{dealer.card_values.first}"
+      puts "Dealer: #{dealer}--Score: #{dealer.card_values.first}"
       puts prep_card_display([dealer.hand.first, Card.new('?', '?')])
     else
-      puts "Dealer: #{dealer.name}--Score: #{dealer.evaluate_hand}"
+      puts "Dealer: #{dealer}--Score: #{dealer.evaluate_hand}"
       puts prep_card_display(dealer.hand)
     end
   end
@@ -277,7 +287,7 @@ class Dealer < Player
               Sally Kim Carry Jessie Chrissa
               Clamtrop Claptrap Rose Dorothy Sophia Blanche)
 
-  attr_accessor :deck
+  attr_reader :deck
 
   def initialize
     super
@@ -322,6 +332,7 @@ class Score
   end
 
   # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Layout/LineLength
   def to_s
     board_size = 20
     line = '-' * board_size
@@ -333,12 +344,15 @@ class Score
       puts "Won: ".rjust(8)  + score[:won].to_s
       puts "Lost: ".rjust(8) + score[:lost].to_s
       puts "Tied: ".rjust(8) + score[:tied].to_s
-      puts "TIMES BUSTED: "  + score[:bust].to_s
+      puts "Win%: ".rjust(8) + (score[:won].fdiv(score.values[0, 3].sum) * 100).ceil.to_s + "%"
+      puts "Total Games: " + score.values[0, 3].sum.to_s
+      puts "TIMES BUSTED: " + score[:bust].to_s
     end
     line
   end
   # rubocop:enable Metrics/MethodLength
   # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Layout/LineLength
 end
 
 class Game
