@@ -440,15 +440,15 @@ class TwentyOne
 
   def player_turns
     players.each do |player|
-      decide(player)
+      take_turn(player)
       display_busted(player) if player.busted?
     end
     self.first_show = false if first_show
   end
 
-  def decide(player)
+  def take_turn(player)
     if player.is_a? Computer
-      computer_decide(player)
+      automate_turn(player)
     else
       player_decide(player)
     end
@@ -464,10 +464,8 @@ class TwentyOne
     end
   end
 
-  def computer_decide(player)
-    until player.evaluate_hand >= 17 ||
-          player.busted?
-      sleep(0.5)
+  def automate_turn(player)
+    until player.evaluate_hand >= 17 || player.busted?
       dealer.deal(player, 1)
       show_cards
     end
@@ -476,11 +474,8 @@ class TwentyOne
   def dealer_turn
     all_bust = players.all?(&:busted?)
     unless all_bust
-      until dealer.evaluate_hand >= 17 || dealer.busted?
-        dealer.deal(dealer, 1)
-      end
+      automate_turn(dealer)
     end
-    sleep(1)
     show_cards
   end
 
