@@ -218,6 +218,13 @@ class Player
     name
   end
 
+  def move
+    until player.evaluate_hand >= 17 || player.busted?
+      dealer.deal(player, 1)
+      show_cards
+    end
+  end
+    
   def card_values
     hand.map do |card|
       case card.rank
@@ -267,6 +274,16 @@ class Human < Player
   def stay?(move)
     move == 's'
   end
+
+  def move
+    loop do
+      puts "#{name}'s turn."
+      move = hit_or_stay
+      dealer.deal(player, 1) if hit?(move)
+      show_cards
+      break if stay?(move) || busted?
+    end
+  end
 end
 
 class Computer < Player
@@ -295,6 +312,14 @@ class Dealer < Player
 
   def set_name
     NAMES.sample
+  end
+
+  def move
+    all_bust = players.all?(&:busted?)
+    unless all_bust
+      super
+    end
+    show_cards
   end
 
   def deal(player, num_cards)
@@ -440,44 +465,45 @@ class TwentyOne
 
   def player_turns
     players.each do |player|
-      take_turn(player)
+      # take_turn(player) replacing with player.move
+      player.move
       display_busted(player) if player.busted?
     end
     self.first_show = false if first_show
   end
 
-  def take_turn(player)
-    if player.is_a? Computer
-      automate_turn(player)
-    else
-      player_decide(player)
-    end
-  end
+  # def take_turn(player)
+  #   if player.is_a? Computer
+  #     automate_turn(player)
+  #   else
+  #     player_decide(player)
+  #   end
+  # end
 
-  def player_decide(player)
-    loop do
-      puts "#{player}'s turn."
-      move = hit_or_stay
-      dealer.deal(player, 1) if player.hit?(move)
-      show_cards
-      break if player.stay?(move) || player.busted?
-    end
-  end
+  # def player_decide(player)
+  #   loop do
+  #     puts "#{player}'s turn."
+  #     move = hit_or_stay
+  #     dealer.deal(player, 1) if player.hit?(move)
+  #     show_cards
+  #     break if player.stay?(move) || player.busted?
+  #   end
+  # end
 
-  def automate_turn(player)
-    until player.evaluate_hand >= 17 || player.busted?
-      dealer.deal(player, 1)
-      show_cards
-    end
-  end
+  # def automate_turn(player)
+  #   until player.evaluate_hand >= 17 || player.busted?
+  #     dealer.deal(player, 1)
+  #     show_cards
+  #   end
+  # end
 
-  def dealer_turn
-    all_bust = players.all?(&:busted?)
-    unless all_bust
-      automate_turn(dealer)
-    end
-    show_cards
-  end
+  # def dealer_turn
+  #   all_bust = players.all?(&:busted?)
+  #   unless all_bust
+  #     automate_turn(dealer)
+  #   end
+  #   show_cards
+  # end
 
   def set_players
     humans = set_humans
